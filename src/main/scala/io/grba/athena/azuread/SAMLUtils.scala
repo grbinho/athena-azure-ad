@@ -9,10 +9,10 @@ import java.util.zip.{Deflater, DeflaterOutputStream}
 
 import com.simba.athena.amazonaws.util.Base64
 
-class SAMLUtils(appId: String) {
+object SAMLUtils {
   private val SAML_PATTERN: Pattern = Pattern.compile("SAMLResponse\\W+value=\"([^\"]+)\"")
 
-  def getSAMLRequest: String = {
+  def getSAMLRequest(appId: String): String = {
     val id = java.util.UUID.randomUUID().toString
     val issueInstant = java.time.Instant.now()
     val samlRequest =
@@ -47,5 +47,4 @@ class SAMLUtils(appId: String) {
 
     samlResponseMatcher.group(1)
   }
-
 }

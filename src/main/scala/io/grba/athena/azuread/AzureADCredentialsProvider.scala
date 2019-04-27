@@ -59,38 +59,34 @@ class AzureADCredentialsProvider extends SamlCredentialsProvider {
     val loginUrl = s"https://${host}/${tenantId}/login"
 
     Try {
-      val samlUtils = new SAMLUtils(appId)
-      val loginFormUtils = new LoginFormUtils()
       val httpClient = this.getHttpClient
-      val samlRequest = samlUtils.getSAMLRequest
 
+      val samlRequest = SAMLUtils.getSAMLRequest(appId)
       val loginRequestUrl = s"${samlUrl}?SAMLRequest=${samlRequest}"
       val loginPageGetRequest = new HttpGet(loginRequestUrl)
-      val loginPageResult = httpClient.execute(loginPageGetRequest)
+      val loginPageResponse = httpClient.execute(loginPageGetRequest)
 
-      if (loginPageResult.getStatusLine.getStatusCode != 200) {
-        throw new IOException(s"Failed to send request: ${loginPageResult.getStatusLine.getReasonPhrase}")
+      logResponseHeaders(loginPageResponse)
+      if (loginPageResponse.getStatusLine.getStatusCode != 200) {
+        throw new IOException(s"Failed to send request: ${loginPageResponse.getStatusLine.getReasonPhrase}")
       }
 
-      val loginPage = EntityUtils.toString(loginPageResult.getEntity)
-      logResponseHeaders(loginPageResult)
+      val loginPage = EntityUtils.toString(loginPageResponse.getEntity)
+      val loginFormConfig = LoginFormUtils.getFormConfigFromPage(loginPage)
+      val xMsRequestId = loginPageResponse.getHeaders("x-ms-request-id").head.getValue
+      val loginForm = LoginFormUtils.setupLoginForm(loginFormConfig, username, password, xMsRequestId)
 
-      val loginFormConfig = loginFormUtils.getFormConfigFromPage(loginPage)
-      val xMsRequestId = loginPageResult.getHeaders("x-ms-request-id").head.getValue
       val loginPostRequest = new HttpPost(loginUrl)
-
-      val loginForm = loginFormUtils.setupLoginForm(loginFormConfig, username, password, xMsRequestId)
-
       loginPostRequest.setEntity(loginForm)
       val loginResponse = httpClient.execute(loginPostRequest)
-      logResponseHeaders(loginResponse)
 
+      logResponseHeaders(loginResponse)
       if (loginResponse.getStatusLine.getStatusCode != 200) {
         throw new IOException(s"Failed to send request: ${loginResponse.getStatusLine.getReasonPhrase}")
       }
 
       val loginResult = EntityUtils.toString(loginResponse.getEntity)
-      val samlResponse = samlUtils.getSAMLResponse(loginResult.toString)
+      val samlResponse = SAMLUtils.getSAMLResponse(loginResult.toString)
 
       IOUtils.closeQuietly(httpClient, logger)
 

@@ -13,3 +13,5 @@ Apart from you domain username and password you need to set up some additional p
 `azad_app_id`:  You can find this in Azure AD AWS app (Application (client) ID)
 
 Until it's officially supported by AWS, I hope this works for you!
+
+You can download the JAR from releases page or just clone this repo and run `sbt assembly` to package the code.

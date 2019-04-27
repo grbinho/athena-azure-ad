@@ -5,9 +5,7 @@ version := "0.1"
 scalaVersion := "2.12.8"
 
 libraryDependencies ++= Seq(
-  "commons-codec" % "commons-codec" % "1.10",
   "com.google.code.gson" % "gson" % "2.8.5"
-
 )
 
 unmanagedJars in Compile += file("lib/AthenaJDBC42_2.0.7.jar")
